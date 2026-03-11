@@ -42,10 +42,11 @@ function ResetPasswordForm() {
     if (isNeonAuthClientConfigured() && authClient) {
       setLoading(true);
       try {
-        const { error: resetError } = await (authClient as { resetPassword?: (opts: { newPassword: string; token: string }) => Promise<{ error?: { message?: string } }> }).resetPassword?.({
+        const result = await (authClient as { resetPassword?: (opts: { newPassword: string; token: string }) => Promise<{ error?: { message?: string } } | undefined> }).resetPassword?.({
           newPassword: password,
           token,
         });
+        const resetError = result?.error;
         if (resetError) {
           setError(resetError.message ?? 'Reset failed. Link may have expired.');
           return;

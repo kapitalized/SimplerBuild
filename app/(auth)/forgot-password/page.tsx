@@ -30,10 +30,11 @@ function ForgotPasswordForm() {
           typeof window !== 'undefined'
             ? `${window.location.origin}/reset-password`
             : '/reset-password';
-        const { error: resetError } = await (authClient as { requestPasswordReset?: (opts: { email: string; redirectTo?: string }) => Promise<{ error?: { message?: string } }> }).requestPasswordReset?.({
+        const result = await (authClient as { requestPasswordReset?: (opts: { email: string; redirectTo?: string }) => Promise<{ error?: { message?: string } } | undefined> }).requestPasswordReset?.({
           email: email.trim(),
           redirectTo,
         });
+        const resetError = result?.error;
         if (resetError) {
           setError(resetError.message ?? 'Request failed.');
           return;
