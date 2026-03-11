@@ -1,6 +1,7 @@
 /**
  * Neon Auth (Better Auth) handler. Base stack.
  * All auth routes (sign-in, sign-out, session, etc.) go through this.
+ * Next.js [...all] gives params.all; Neon Auth handler expects params.path.
  */
 
 import { auth } from '@/lib/auth/server';
@@ -15,12 +16,24 @@ async function notConfigured() {
   );
 }
 
+function toPathParams(params: Promise<{ all?: string[] }>): Promise<{ path: string[] }> {
+  return params.then((p) => ({ path: p.all ?? [] }));
+}
+
 export async function GET(
   req: Request,
   context: { params: Promise<{ all?: string[] }> }
 ) {
   if (!handler) return notConfigured();
-  return handler.GET(req, { params: context.params as Promise<{ path: string[] }> });
+  try {
+    return await handler.GET(req, { params: toPathParams(context.params) });
+  } catch (err) {
+    console.error('[auth GET]:', err);
+    return NextResponse.json(
+      { error: 'Auth failed', detail: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(
@@ -28,5 +41,13 @@ export async function POST(
   context: { params: Promise<{ all?: string[] }> }
 ) {
   if (!handler) return notConfigured();
-  return handler.POST(req, { params: context.params as Promise<{ path: string[] }> });
+  try {
+    return await handler.POST(req, { params: toPathParams(context.params) });
+  } catch (err) {
+    console.error('[auth POST]:', err);
+    return NextResponse.json(
+      { error: 'Auth failed', detail: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
 }
