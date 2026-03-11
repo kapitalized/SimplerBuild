@@ -15,12 +15,18 @@ async function notConfigured() {
   );
 }
 
-export async function GET(req: Request) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ all?: string[] }> }
+) {
   if (!handler) return notConfigured();
-  return handler.GET(req);
+  return handler.GET(req, { params: context.params as Promise<{ path: string[] }> });
 }
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ all?: string[] }> }
+) {
   if (!handler) return notConfigured();
-  return handler.POST(req);
+  return handler.POST(req, { params: context.params as Promise<{ path: string[] }> });
 }

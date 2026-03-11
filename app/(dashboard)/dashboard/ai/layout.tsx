@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { BRAND } from '@/lib/brand';
 
 export default function AILayout({ children }: { children: React.ReactNode }) {
   return (

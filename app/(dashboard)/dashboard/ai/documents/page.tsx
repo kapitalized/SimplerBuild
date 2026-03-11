@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-
 /**
  * AI Documents — upload and list. Run pipeline per doc; link to Reports when done.
  */
 export default function AIDocumentsPage() {
-  const [uploading, setUploading] = useState(false);
 
   return (
     <div className="space-y-6">

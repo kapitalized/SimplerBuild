@@ -2,6 +2,7 @@
  * Export (recommendation 4): Excel/CSV for tables; optional PDF for signed reports.
  * Stubs; implement with xlsx and jsPDF (or server-side) when needed.
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import type { AuditItem } from './citation-audit';
 

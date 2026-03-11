@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { authClient, isNeonAuthClientConfigured } from '@/lib/auth/client';
 import { createClient } from '@/lib/supabase/client';
 
@@ -11,7 +11,7 @@ const supabaseConfigured = () =>
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get('next') || '/dashboard';
@@ -131,5 +131,13 @@ export default function LoginPage() {
         {isNeonAuthClientConfigured() ? 'Create users via Neon Auth (Neon Console) or sign-up flow.' : 'Create users in Supabase Dashboard → Authentication → Users.'}
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="rounded-xl border bg-card p-6 shadow-sm animate-pulse h-48" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

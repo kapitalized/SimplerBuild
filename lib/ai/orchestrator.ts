@@ -97,7 +97,7 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
   const overrides = templateId ? getPromptOverrides(templateId) : {};
 
   // Step 1: Vision extraction
-  const extractionBase = overrides.extraction ?? 'Extract from the following source as structured JSON. For each item include: id, label, confidence_score (0-1), and coordinate_polygons if spatial.';
+  const extractionBase = overrides?.extraction ?? 'Extract from the following source as structured JSON. For each item include: id, label, confidence_score (0-1), and coordinate_polygons if spatial.';
   const extractionPrompt = `${extractionBase} Source: ${sourceContent ?? '[No content: add fileUrl or sourceContent]'}`;
   let raw_extraction: ExtractionResult;
   const extractionModel = getModelForStep('EXTRACTION');
@@ -122,7 +122,7 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
   const libraryStr = Object.entries(libraryContext)
     .map(([k, v]) => `${k}: ${v}`)
     .join(', ');
-  const analysisBase = overrides.analysis ?? 'Given extraction: apply constants. Output a JSON array of items with: id, label, value (number), unit, citation_id.';
+  const analysisBase = overrides?.analysis ?? 'Given extraction: apply constants. Output a JSON array of items with: id, label, value (number), unit, citation_id.';
   const analysisPrompt = `${analysisBase} Extraction: ${JSON.stringify(raw_extraction)}. Constants: ${libraryStr || 'none'}.`;
   let analysisItems: AuditItem[];
   const analysisModel = getModelForStep('ANALYSIS');
@@ -145,7 +145,7 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
 
   // Step 3: Synthesis + citation audit
   const audit = runCitationAudit(analysisItems, benchmarks);
-  const synthesisBase = overrides.synthesis ?? 'Format these analysis results as a short Markdown report.';
+  const synthesisBase = overrides?.synthesis ?? 'Format these analysis results as a short Markdown report.';
   const synthesisPrompt = `${synthesisBase} Items: ${JSON.stringify(analysisItems)}. ${audit.criticalWarnings.length > 0 ? `Add a CRITICAL WARNING section for: ${audit.criticalWarnings.map((w) => w.message).join('; ')}` : ''}`;
   let content_md: string;
   const synthesisModel = getModelForStep('SYNTHESIS');

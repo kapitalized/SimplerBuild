@@ -16,7 +16,7 @@ export async function uploadBlob(
   options?: { access?: 'public' | 'private'; contentType?: string; addRandomSuffix?: boolean }
 ): Promise<{ url: string; pathname: string }> {
   const blob = await put(pathname, body, {
-    access: options?.access ?? 'private',
+    access: 'public',
     contentType: options?.contentType,
     addRandomSuffix: options?.addRandomSuffix ?? false,
   });

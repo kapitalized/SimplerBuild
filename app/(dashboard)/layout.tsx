@@ -55,9 +55,9 @@ export default async function DashboardLayout({
             <span className="text-sm text-muted-foreground">
               {user.email}
               {isNeonAuthConfigured() ? (
-                <a href="/api/auth/sign-out" className="ml-2 text-sm text-muted-foreground hover:text-foreground underline">
+                <Link href="/api/auth/sign-out" className="ml-2 text-sm text-muted-foreground hover:text-foreground underline">
                   Sign out
-                </a>
+                </Link>
               ) : (
                 <form action={signOut} className="inline ml-2">
                   <button type="submit" className="text-sm text-muted-foreground hover:text-foreground underline">
