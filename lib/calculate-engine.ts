@@ -4,7 +4,7 @@
  */
 
 export interface CalculatePayload {
-  data: Array<{ id?: string; label?: string; area?: number; [k: string]: unknown }>;
+  data: unknown[];
   parameters: Record<string, unknown>;
 }
 
@@ -25,12 +25,13 @@ export interface CalculateResult {
 
 export function runCalculate(payload: CalculatePayload): CalculateResult {
   const thickness = Number(payload.parameters?.thickness ?? 0.2);
-  const results = payload.data.map((item) => {
-    const area = Number(item.area ?? 0);
+  const results = payload.data.map((el) => {
+    const item = el as Record<string, unknown>;
+    const area = Number(item?.area ?? 0);
     const volume = area * thickness;
     return {
-      id: item.id,
-      label: (item.label as string) ?? 'Unknown Component',
+      id: item?.id as string | undefined,
+      label: (item?.label as string) ?? 'Unknown Component',
       area_m2: Math.round(area * 100) / 100,
       volume_m3: Math.round(volume * 100) / 100,
       verified: true,
