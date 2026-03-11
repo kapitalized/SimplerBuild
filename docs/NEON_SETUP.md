@@ -71,6 +71,27 @@ See `docs/SCHEMA_SETUP.md` for details.
 
 ---
 
+## 6. Session cookies and different URLs
+
+**Sessions are tied to the exact origin** (protocol + host + port). These are all different origins, so each has its own session cookie:
+
+- `http://localhost:3000`
+- `http://localhost:3001`
+- `https://your-app.vercel.app`
+- `https://your-app-git-branch.vercel.app` (preview)
+
+So if you log in on **localhost:3000**, then open the app on **Vercel** (or another port), you will not be logged in there. The same user exists in Neon Auth, but the browser does not send the cookie to a different origin.
+
+**What to do:**
+
+1. **Use one origin per workflow.** For local dev use only `http://localhost:3000` (or one port). For production use your main Vercel URL. Log in again when you switch.
+2. **Stick to one port locally.** If you sometimes use 3000 and sometimes 3001, use the same port so the cookie is reused (e.g. always `npm run dev` and use 3000).
+3. **Preview deployments** have their own URL and thus their own session; log in on each preview if you need to test auth there.
+
+This is normal browser behavior and not a bug in Neon Auth.
+
+---
+
 ## Checklist
 
 - [ ] Neon project created; connection string copied (`DATABASE_URL`)

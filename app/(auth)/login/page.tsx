@@ -19,8 +19,16 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
+  const [showFallbackLink, setShowFallbackLink] = useState(false);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!redirecting) return;
+    const t = setTimeout(() => setShowFallbackLink(true), 2500);
+    return () => clearTimeout(t);
+  }, [redirecting]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,17 +37,33 @@ function LoginForm() {
     if (isNeonAuthClientConfigured() && authClient) {
       setLoading(true);
       try {
-        const { error: signInError } = await authClient.signIn.email({
+        const res = await authClient.signIn.email({
           email,
           password,
           callbackURL: next,
         });
+        const signInError = res?.error;
         if (signInError) {
           setError(signInError.message ?? 'Invalid email or password.');
           return;
         }
-        router.push(next);
-        router.refresh();
+        const target = next.startsWith('/') ? next : `/${next}`;
+        const redirectUrl =
+          (res as { url?: string })?.url ??
+          (res as { data?: { url?: string } })?.data?.url ??
+          null;
+        let goTo = target;
+        if (redirectUrl) {
+          if (redirectUrl.startsWith('/')) goTo = redirectUrl;
+          else try {
+            if (new URL(redirectUrl).origin === window.location.origin) goTo = redirectUrl;
+          } catch {
+            /* use target */
+          }
+        }
+        window.location.href = goTo;
+        setRedirecting(true);
+        return;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Sign in failed.');
       } finally {
@@ -128,6 +152,20 @@ function LoginForm() {
         </div>
         {error && (
           <p className="text-sm text-red-600">{error}</p>
+        )}
+        {redirecting && (
+          <p className="text-sm text-muted-foreground">
+            Redirecting…
+            {showFallbackLink && (
+              <span className="block mt-2">
+                If nothing happened,{' '}
+                <Link href={searchParams.get('next') || '/dashboard'} className="text-primary font-medium hover:underline">
+                  open the dashboard
+                </Link>
+                .
+              </span>
+            )}
+          </p>
         )}
         <div className="flex justify-end">
           <Link href="/forgot-password" className="text-xs text-primary hover:underline">

@@ -44,8 +44,9 @@ function SignUpForm() {
           setError(signUpError.message ?? 'Sign up failed.');
           return;
         }
-        router.push(next);
-        router.refresh();
+        const target = next.startsWith('/') ? next : `/${next}`;
+        window.location.href = target;
+        return;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Sign up failed.');
       } finally {
@@ -71,8 +72,8 @@ function SignUpForm() {
           setError(signUpError.message);
           return;
         }
-        router.push(next);
-        router.refresh();
+        const target = next.startsWith('/') ? next : `/${next}`;
+        window.location.href = target;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Sign up failed.');
       } finally {
