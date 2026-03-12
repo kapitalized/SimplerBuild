@@ -8,6 +8,7 @@ import { getSessionForApi } from '@/lib/auth/session';
 import { runPipeline } from '@/lib/ai/orchestrator';
 import { getAIModelConfig } from '@/lib/ai/model-config';
 import { persistPipelineResult } from '@/lib/ai/persistence';
+import { writeLogReport, writeLogAiRun } from '@/lib/ai/logs';
 import { db } from '@/lib/db';
 import { project_main, project_files } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -98,6 +99,30 @@ export async function POST(req: Request) {
         inputSizeBytes: inputSizeBytes ?? undefined,
         inputPageCount: body.inputPageCount != null ? Number(body.inputPageCount) : (fileId ? 1 : undefined),
       },
+    });
+
+    await writeLogReport({
+      projectId,
+      userId: session.userId,
+      reportId,
+      analysisId,
+      reportType,
+      source: 'pipeline',
+      fileIds: fileId ? [fileId] : [],
+    });
+    const usage = result.tokenUsage as { total_prompt_tokens?: number; total_completion_tokens?: number; total_tokens?: number; total_cost?: number } | undefined;
+    await writeLogAiRun({
+      eventType: 'pipeline_run',
+      projectId,
+      userId: session.userId,
+      provider: 'openrouter',
+      model: modelsUsed.extraction ?? modelsUsed.analysis ?? modelsUsed.synthesis ?? undefined,
+      inputTokens: usage?.total_prompt_tokens ?? undefined,
+      outputTokens: usage?.total_completion_tokens ?? undefined,
+      totalTokens: usage?.total_tokens ?? undefined,
+      cost: usage?.total_cost ?? undefined,
+      latencyMs: runDurationMs,
+      metadata: { taskId, fileId: fileId ?? undefined, digestId, analysisId, reportId },
     });
 
     return NextResponse.json({

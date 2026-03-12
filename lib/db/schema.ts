@@ -138,6 +138,38 @@ export const report_generated = pgTable('report_generated', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// ---- LOGS (audit: AI runs, report creation; use logs_ prefix) ----
+/** One row per AI provider call (OpenRouter, etc.): model, tokens, cost, context. */
+export const logs_ai_runs = pgTable('logs_ai_runs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  eventType: text('event_type').notNull(), // 'pipeline_run', 'chat_turn', 'batch_step'
+  projectId: uuid('project_id').references(() => project_main.id),
+  userId: uuid('user_id').references(() => user_profiles.id),
+  provider: text('provider').notNull(), // 'openrouter'
+  model: text('model'),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  totalTokens: integer('total_tokens'),
+  cost: decimal('cost'),
+  latencyMs: integer('latency_ms'),
+  metadata: jsonb('metadata'), // taskId, fileId, threadId, step, etc.
+});
+
+/** One row per report creation; links report → analysis → file(s) analysed for traceability. */
+export const logs_reports = pgTable('logs_reports', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  projectId: uuid('project_id').references(() => project_main.id).notNull(),
+  userId: uuid('user_id').references(() => user_profiles.id),
+  reportId: uuid('report_id').references(() => report_generated.id).notNull(),
+  analysisId: uuid('analysis_id').references(() => ai_analyses.id).notNull(),
+  reportType: text('report_type').notNull(), // 'quantity_takeoff', 'defect_audit'
+  source: text('source'), // 'pipeline', 'from_chat', 'python_analyze'
+  /** File(s) that were analysed to produce this report (project_files.id). Enables link back from report to source files. */
+  fileIds: jsonb('file_ids'), // array of UUID strings
+});
+
 // ---- MODULE 6: REFERENCE LIBRARY (global, admin-maintained) ----
 // See docs/Library_Setup.md and docs/Library_Populate.md
 

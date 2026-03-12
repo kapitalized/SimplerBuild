@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForApi } from '@/lib/auth/session';
 import { callPythonEngine } from '@/lib/python-client';
 import { persistAnalyzeResult } from '@/lib/ai/persistence';
+import { writeLogReport } from '@/lib/ai/logs';
 import { db } from '@/lib/db';
 import { project_main } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -56,6 +57,16 @@ export async function POST(req: Request) {
       fileId: fileId ?? null,
       results,
       metadata: pythonResult.metadata as Record<string, unknown>,
+    });
+
+    await writeLogReport({
+      projectId,
+      userId: session.userId,
+      reportId,
+      analysisId,
+      reportType: 'quantity_takeoff',
+      source: 'python_analyze',
+      fileIds: fileId ? [fileId] : [],
     });
 
     return NextResponse.json({

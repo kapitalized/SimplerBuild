@@ -9,6 +9,7 @@ import { db } from '@/lib/db';
 import { project_main, ai_analyses, report_generated } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { parseMarkdownQuantitiesTable } from '@/lib/ai/parse-markdown-table';
+import { writeLogReport } from '@/lib/ai/logs';
 
 async function ensureProjectOwnership(projectId: string, userId: string): Promise<boolean> {
   const [row] = await db
@@ -87,6 +88,16 @@ export async function POST(
   if (!report?.id) {
     return NextResponse.json({ error: 'Failed to create report' }, { status: 500 });
   }
+
+  await writeLogReport({
+    projectId,
+    userId: session.userId,
+    reportId: report.id,
+    analysisId: analysis.id,
+    reportType: 'quantity_takeoff',
+    source: 'from_chat',
+    fileIds: [],
+  });
 
   return NextResponse.json({
     reportId: report.id,

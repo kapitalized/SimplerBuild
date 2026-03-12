@@ -71,6 +71,13 @@
       "when": 1773400000000,
       "tag": "0009_analysis_step_trace",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1773354510163,
+      "tag": "0010_logs_tables",
+      "breakpoints": true
     }
   ]
 }
