@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useProject } from '../ProjectProvider';
 import { ProjectNav } from '../ProjectNav';
-import { AIChatContent } from '@/app/(dashboard)/dashboard/ai/chat/page';
+import { AIChatContent } from '@/app/(dashboard)/dashboard/ai/chat/AIChatContent';
 import { useParams } from 'next/navigation';
 
 interface ChatContextResponse {
