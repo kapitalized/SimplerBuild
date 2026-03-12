@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { getSessionForApi } from '@/lib/auth/session';
 import { db } from '@/lib/db';
@@ -28,11 +27,6 @@ export default async function ProjectLayout({ params, children }: Props) {
   return (
     <ProjectProvider project={project}>
       <ProjectDocumentTitle />
-      <div className="mb-2">
-        <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-          ← Back to dashboard
-        </Link>
-      </div>
       {children}
     </ProjectProvider>
   );

@@ -1,12 +1,13 @@
 'use client';
 
 /**
- * Dashboard home: list projects and create new one. Edit project (description, objectives) via modal.
+ * Dashboard home: list projects and create new one. Edit project (description, country, status) via modal.
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { projectPath, projectSubPath } from '@/lib/project-url';
+import { COUNTRY_OPTIONS, PROJECT_STATUS_OPTIONS } from '@/lib/project-form-options';
 
 interface Project {
   id: string;
@@ -14,6 +15,8 @@ interface Project {
   projectAddress?: string | null;
   projectDescription?: string | null;
   projectObjectives?: string | null;
+  country?: string | null;
+  projectStatus?: string | null;
   status?: string | null;
   createdAt?: string | null;
   shortId?: string | null;
@@ -28,13 +31,15 @@ export default function DashboardPage() {
   const [newName, setNewName] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [newDescription, setNewDescription] = useState('');
-  const [newObjectives, setNewObjectives] = useState('');
+  const [newCountry, setNewCountry] = useState('');
+  const [newProjectStatus, setNewProjectStatus] = useState('');
   const [creating, setCreating] = useState(false);
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editObjectives, setEditObjectives] = useState('');
+  const [editCountry, setEditCountry] = useState('');
+  const [editProjectStatus, setEditProjectStatus] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
 
   async function load() {
@@ -74,7 +79,8 @@ export default function DashboardPage() {
           setEditName(p.projectName ?? '');
           setEditAddress(p.projectAddress ?? '');
           setEditDescription(p.projectDescription ?? '');
-          setEditObjectives(p.projectObjectives ?? '');
+          setEditCountry(p.country ?? '');
+          setEditProjectStatus(p.projectStatus ?? '');
         }
       } catch {
         if (!cancelled) setEditProjectId(null);
@@ -87,7 +93,8 @@ export default function DashboardPage() {
     setEditName(project.projectName ?? '');
     setEditAddress(project.projectAddress ?? '');
     setEditDescription(project.projectDescription ?? '');
-    setEditObjectives(project.projectObjectives ?? '');
+    setEditCountry(project.country ?? '');
+    setEditProjectStatus(project.projectStatus ?? '');
   }
   async function saveEdit() {
     if (!editProjectId || savingEdit) return;
@@ -102,7 +109,8 @@ export default function DashboardPage() {
           projectName: editName.trim() || undefined,
           projectAddress: editAddress.trim() || undefined,
           projectDescription: editDescription.trim().slice(0, 500) || undefined,
-          projectObjectives: editObjectives.trim().slice(0, 2000) || undefined,
+          country: editCountry.trim() || undefined,
+          projectStatus: editProjectStatus.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -133,7 +141,8 @@ export default function DashboardPage() {
           projectName: newName.trim(),
           projectAddress: newAddress.trim() || undefined,
           projectDescription: newDescription.trim().slice(0, 500) || undefined,
-          projectObjectives: newObjectives.trim().slice(0, 2000) || undefined,
+          country: newCountry.trim() || undefined,
+          projectStatus: newProjectStatus.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -144,7 +153,8 @@ export default function DashboardPage() {
       setNewName('');
       setNewAddress('');
       setNewDescription('');
-      setNewObjectives('');
+      setNewCountry('');
+      setNewProjectStatus('');
       await load();
     } catch {
       setError('Failed to create project.');
@@ -155,11 +165,9 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">Manage projects and run AI analysis.</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="mt-2 text-muted-foreground">Manage projects and run AI analysis.</p>
       </div>
 
       {error && (
@@ -168,111 +176,131 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <section>
-        <h2 className="font-semibold text-lg mb-2">New project</h2>
-        <form onSubmit={createProject} className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground">Name</span>
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Project name"
-              className="rounded-md border border-input bg-background px-3 py-2 w-48 text-foreground placeholder:text-muted-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground">Location (optional)</span>
-            <input
-              type="text"
-              value={newAddress}
-              onChange={(e) => setNewAddress(e.target.value)}
-              placeholder="Location"
-              className="rounded-md border border-input bg-background px-3 py-2 w-56 text-foreground placeholder:text-muted-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground">Description (optional)</span>
-            <input
-              type="text"
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Short description"
-              maxLength={500}
-              className="rounded-md border border-input bg-background px-3 py-2 w-64 text-foreground placeholder:text-muted-foreground"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground">Objectives (optional)</span>
-            <textarea
-              value={newObjectives}
-              onChange={(e) => setNewObjectives(e.target.value)}
-              placeholder="e.g. Villa on Spanish coast, have design but no builder, want cost estimates from drawings"
-              maxLength={2000}
-              rows={2}
-              className="rounded-md border border-input bg-background px-3 py-2 w-96 text-foreground placeholder:text-muted-foreground resize-y"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={creating || !newName.trim()}
-            className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-          >
-            {creating ? 'Creating…' : 'Create'}
-          </button>
-        </form>
-      </section>
-
-      <section>
-        <h2 className="font-semibold text-lg mb-2">Projects</h2>
-        {loading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : projects.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No projects yet. Create one above.</p>
-        ) : (
-          <ul className="space-y-2">
-            {projects.map((p) => {
-              const projectUrl = p.shortId && p.slug ? `/project/${p.shortId}/${p.slug}` : null;
-              return (
-                <li key={p.id} className="flex flex-wrap items-start gap-3 rounded-lg border p-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">
-                      <Link href={projectPath(p)} className="text-foreground hover:underline">
-                        {p.projectName}
-                      </Link>
-                    </p>
-                    {p.projectAddress && <p className="text-xs text-muted-foreground truncate">{p.projectAddress}</p>}
-                    {p.projectDescription && <p className="text-xs text-muted-foreground truncate mt-0.5">{p.projectDescription}</p>}
-                    {p.projectObjectives && <p className="text-xs text-muted-foreground truncate mt-0.5" title={p.projectObjectives}>{p.projectObjectives}</p>}
-                    {projectUrl && (
-                      <p className="mt-1.5 text-xs text-muted-foreground font-mono truncate" title={projectUrl}>
-                        {projectUrl}
+      <div className="grid gap-6 lg:grid-cols-[1fr,400px]">
+        {/* Left: Projects list */}
+        <section className="min-w-0">
+          <h2 className="font-semibold text-lg mb-2">Projects</h2>
+          {loading ? (
+            <p className="text-muted-foreground text-sm">Loading…</p>
+          ) : projects.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No projects yet. Create one in the form on the right.</p>
+          ) : (
+            <ul className="space-y-2">
+              {projects.map((p) => {
+                const projectUrl = p.shortId && p.slug ? `/project/${p.shortId}/${p.slug}` : null;
+                return (
+                  <li key={p.id} className="flex flex-wrap items-start gap-3 rounded-lg border p-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        <Link href={projectPath(p)} className="text-foreground hover:underline">
+                          {p.projectName}
+                        </Link>
                       </p>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => loadEditForm(p)} className="text-sm text-primary hover:underline">
-                      Edit
-                    </button>
-                    <Link href={projectPath(p)} className="text-sm text-primary hover:underline">
-                      Open
-                    </Link>
-                    <Link href={projectSubPath(p, 'documents')} className="text-sm text-primary hover:underline">
-                      Documents
-                    </Link>
-                    <Link href={projectSubPath(p, 'reports')} className="text-sm text-primary hover:underline">
-                      Reports
-                    </Link>
-                    <Link href={projectSubPath(p, 'chat')} className="text-sm text-primary hover:underline">
-                      Chat
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                      {p.projectAddress && <p className="text-xs text-muted-foreground truncate">{p.projectAddress}</p>}
+                      {(p.country || p.projectStatus) && <p className="text-xs text-muted-foreground truncate mt-0.5">{[p.country, p.projectStatus].filter(Boolean).join(' · ')}</p>}
+                      {p.projectDescription && <p className="text-xs text-muted-foreground truncate mt-0.5">{p.projectDescription}</p>}
+                      {projectUrl && (
+                        <p className="mt-1.5 text-xs text-muted-foreground font-mono truncate" title={projectUrl}>
+                          {projectUrl}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="button" onClick={() => loadEditForm(p)} className="text-sm text-primary hover:underline">
+                        Edit
+                      </button>
+                      <Link href={projectPath(p)} className="text-sm text-primary hover:underline">
+                        Open
+                      </Link>
+                      <Link href={projectSubPath(p, 'documents')} className="text-sm text-primary hover:underline">
+                        Documents
+                      </Link>
+                      <Link href={projectSubPath(p, 'quantities')} className="text-sm text-primary hover:underline">
+                        Quantities
+                      </Link>
+                      <Link href={projectSubPath(p, 'reports')} className="text-sm text-primary hover:underline">
+                        Reports
+                      </Link>
+                      <Link href={projectSubPath(p, 'chat')} className="text-sm text-primary hover:underline">
+                        Chat
+                      </Link>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Right: Create new project */}
+        <section className="lg:max-w-[400px]">
+          <h2 className="font-semibold text-lg mb-2">New project</h2>
+          <form onSubmit={createProject} className="space-y-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">Name</span>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Project name"
+                className="rounded-md border border-input bg-background px-3 py-2 w-full text-foreground placeholder:text-muted-foreground"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">Location (optional)</span>
+              <input
+                type="text"
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+                placeholder="Location"
+                className="rounded-md border border-input bg-background px-3 py-2 w-full text-foreground placeholder:text-muted-foreground"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">Country</span>
+              <select
+                value={newCountry}
+                onChange={(e) => setNewCountry(e.target.value)}
+                className="rounded-md border border-input bg-background px-3 py-2 w-full text-foreground"
+              >
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c || 'blank'} value={c}>{c || 'Select country'}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">Description (optional)</span>
+              <input
+                type="text"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Short description"
+                maxLength={500}
+                className="rounded-md border border-input bg-background px-3 py-2 w-full text-foreground placeholder:text-muted-foreground"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">Status of project</span>
+              <select
+                value={newProjectStatus}
+                onChange={(e) => setNewProjectStatus(e.target.value)}
+                className="rounded-md border border-input bg-background px-3 py-2 w-full text-foreground"
+              >
+                {PROJECT_STATUS_OPTIONS.map((s) => (
+                  <option key={s || 'blank'} value={s}>{s || 'Select status'}</option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={creating || !newName.trim()}
+              className="rounded-md bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50 w-full"
+            >
+              {creating ? 'Creating…' : 'Create project'}
+            </button>
+          </form>
+        </section>
+      </div>
 
       {editProjectId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true">
@@ -298,25 +326,38 @@ export default function DashboardPage() {
                 />
               </label>
               <label className="flex flex-col gap-1">
+                <span className="text-sm text-muted-foreground">Country</span>
+                <select
+                  value={editCountry}
+                  onChange={(e) => setEditCountry(e.target.value)}
+                  className="rounded-md border border-input bg-background px-3 py-2 text-foreground w-full"
+                >
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c || 'blank'} value={c}>{c || 'Select country'}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1">
                 <span className="text-sm text-muted-foreground">Description</span>
                 <input
                   type="text"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   maxLength={500}
-                  className="rounded-md border border-input bg-background px-3 py-2 text-foreground"
+                  className="rounded-md border border-input bg-background px-3 py-2 text-foreground w-full"
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-sm text-muted-foreground">Objectives (what you want to achieve)</span>
-                <textarea
-                  value={editObjectives}
-                  onChange={(e) => setEditObjectives(e.target.value)}
-                  maxLength={2000}
-                  rows={3}
-                  placeholder="e.g. Villa on Spanish coast, have design but no builder, want cost estimates from drawings"
-                  className="rounded-md border border-input bg-background px-3 py-2 text-foreground resize-y"
-                />
+                <span className="text-sm text-muted-foreground">Status of project</span>
+                <select
+                  value={editProjectStatus}
+                  onChange={(e) => setEditProjectStatus(e.target.value)}
+                  className="rounded-md border border-input bg-background px-3 py-2 text-foreground w-full"
+                >
+                  {PROJECT_STATUS_OPTIONS.map((s) => (
+                    <option key={s || 'blank'} value={s}>{s || 'Select status'}</option>
+                  ))}
+                </select>
               </label>
             </div>
             <div className="flex gap-2 mt-4">

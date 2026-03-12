@@ -16,13 +16,28 @@ export async function GET() {
   }
   try {
     const projects = await db
-      .select()
+      .select({
+        id: project_main.id,
+        userId: project_main.userId,
+        projectName: project_main.projectName,
+        projectAddress: project_main.projectAddress,
+        projectDescription: project_main.projectDescription,
+        projectObjectives: project_main.projectObjectives,
+        country: project_main.country,
+        projectStatus: project_main.projectStatus,
+        shortId: project_main.shortId,
+        slug: project_main.slug,
+        status: project_main.status,
+        createdAt: project_main.createdAt,
+        updatedAt: project_main.updatedAt,
+      })
       .from(project_main)
       .where(eq(project_main.userId, session.userId))
       .orderBy(desc(project_main.createdAt));
     return NextResponse.json(projects);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to list projects';
+    console.error('[api/projects GET]:', err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -34,7 +49,7 @@ export async function POST(req: Request) {
   }
   try {
     const body = await req.json();
-    const { projectName, projectAddress, projectDescription, projectObjectives } = body;
+    const { projectName, projectAddress, projectDescription, country, projectStatus } = body;
     if (!projectName || typeof projectName !== 'string' || !projectName.trim()) {
       return NextResponse.json({ error: 'projectName is required' }, { status: 400 });
     }
@@ -54,7 +69,8 @@ export async function POST(req: Request) {
         projectName: name,
         projectAddress: typeof projectAddress === 'string' ? projectAddress.trim() || null : null,
         projectDescription: typeof projectDescription === 'string' ? projectDescription.trim().slice(0, 500) || null : null,
-        projectObjectives: typeof projectObjectives === 'string' ? projectObjectives.trim().slice(0, 2000) || null : null,
+        country: typeof country === 'string' ? country.trim() || null : null,
+        projectStatus: typeof projectStatus === 'string' ? projectStatus.trim() || null : null,
         shortId,
         slug: slug || null,
         status: 'active',

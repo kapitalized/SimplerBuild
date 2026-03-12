@@ -52,6 +52,9 @@ export async function persistPipelineResult(params: PersistPipelineParams): Prom
     items: result.final_analysis?.items ?? [],
     synthesis: synthesis ? { content_md: synthesis.content_md, criticalWarnings: synthesis.criticalWarnings } : undefined,
   };
+  const stepTraceJson = result.stepTrace && result.stepTrace.length > 0
+    ? (result.stepTrace as unknown as Record<string, unknown>[])
+    : null;
   const [analysis] = await db
     .insert(ai_analyses)
     .values({
@@ -65,6 +68,7 @@ export async function persistPipelineResult(params: PersistPipelineParams): Prom
       inputPageCount: runMetadata?.inputPageCount ?? null,
       tokenUsage: tokenUsage ?? null,
       modelsUsed: modelsUsedJson ?? null,
+      stepTrace: stepTraceJson,
     })
     .returning({ id: ai_analyses.id });
   if (!analysis?.id) throw new Error('Failed to insert analysis');

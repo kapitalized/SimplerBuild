@@ -24,6 +24,13 @@ interface Message {
   createdAt: string | null;
 }
 
+interface ReportOption {
+  id: string;
+  reportTitle: string;
+  reportType: string;
+  createdAt: string | null;
+}
+
 export interface AIChatContentProps {
   /** When set (e.g. from /project/shortId/slug/chat), use this project and hide selector */
   initialProjectId?: string;
@@ -122,8 +129,13 @@ export function AIChatContent({ initialProjectId }: AIChatContentProps = {}) {
   const [creating, setCreating] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
+  const [reports, setReports] = useState<ReportOption[]>([]);
+  const [selectedReportId, setSelectedReportId] = useState<string>('');
+  const [addingMessageId, setAddingMessageId] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
 
   const selectedThread = threads.find((t) => t.id === selectedThreadId);
+  const selectedReport = reports.find((r) => r.id === selectedReportId);
 
   useEffect(() => {
     if (initialProjectId) setProjectId(initialProjectId);
@@ -151,6 +163,14 @@ export function AIChatContent({ initialProjectId }: AIChatContentProps = {}) {
   }, [projectId]);
 
   useEffect(() => { loadThreads(); }, [loadThreads]);
+
+  useEffect(() => {
+    if (!projectId || !initialProjectId) return setReports([]);
+    fetch(`/api/projects/${projectId}/reports`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setReports(Array.isArray(data) ? data : []))
+      .catch(() => setReports([]));
+  }, [projectId, initialProjectId]);
 
   useEffect(() => {
     setEditingTitle(false);
@@ -181,6 +201,30 @@ export function AIChatContent({ initialProjectId }: AIChatContentProps = {}) {
       }
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function addToQuantities(messageId: string, content: string) {
+    if (!projectId || addingMessageId) return;
+    setAddingMessageId(messageId);
+    setAddError(null);
+    try {
+      const title = selectedReport ? `${selectedReport.reportTitle} (revised)` : undefined;
+      const res = await fetch(`/api/projects/${projectId}/reports/from-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contentMarkdown: content, reportTitle: title }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAddError((data as { error?: string }).error ?? 'Failed to add to Quantities');
+        return;
+      }
+      setReports((prev) => [...prev, { id: (data as { reportId: string }).reportId, reportTitle: (data as { reportTitle: string }).reportTitle, reportType: 'quantity_takeoff', createdAt: new Date().toISOString() }]);
+    } catch {
+      setAddError('Failed to add to Quantities');
+    } finally {
+      setAddingMessageId(null);
     }
   }
 
@@ -219,7 +263,7 @@ export function AIChatContent({ initialProjectId }: AIChatContentProps = {}) {
       const res = await fetch(`/api/chat/threads/${selectedThreadId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, reportId: selectedReportId || undefined }),
       });
       if (res.ok) {
         const assistant = await res.json();
@@ -318,25 +362,63 @@ export function AIChatContent({ initialProjectId }: AIChatContentProps = {}) {
             )}
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {addError && (
+              <div className="rounded-lg px-3 py-2 text-sm bg-destructive/10 text-destructive">
+                {addError}
+                <button type="button" onClick={() => setAddError(null)} className="ml-2 underline">Dismiss</button>
+              </div>
+            )}
             {!selectedThreadId && (
               <p className="text-muted-foreground text-sm">Choose a thread or create a new chat.</p>
             )}
             {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${m.role === 'user' ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted'}`}
-              >
-                {m.content}
+              <div key={m.id} className={m.role === 'user' ? 'ml-auto max-w-[85%]' : 'max-w-[85%]'}>
+                <div className={`rounded-lg px-3 py-2 text-sm ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                  {m.content}
+                </div>
+                {m.role === 'assistant' && initialProjectId && projectId && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => addToQuantities(m.id, m.content)}
+                      disabled={!!addingMessageId}
+                      className="text-xs text-primary hover:underline disabled:opacity-50"
+                    >
+                      {addingMessageId === m.id ? 'Adding…' : 'Add to Quantities'}
+                    </button>
+                    {addingMessageId === m.id ? null : (
+                      <span className="text-xs text-muted-foreground">Saves revised measurements to Quantities page</span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
           {selectedThreadId && (
-            <form onSubmit={sendMessage} className="p-3 border-t">
+            <form onSubmit={sendMessage} className="p-3 border-t space-y-2">
+              {initialProjectId && reports.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-xs font-medium text-muted-foreground shrink-0">Refine a report (optional)</label>
+                  <select
+                    value={selectedReportId}
+                    onChange={(e) => setSelectedReportId(e.target.value)}
+                    className="rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground max-w-[280px] truncate"
+                  >
+                    <option value="">None</option>
+                    {reports.map((r) => (
+                      <option key={r.id} value={r.id} title={r.reportTitle}>{r.reportTitle}</option>
+                    ))}
+                  </select>
+                  {selectedReport && (
+                    <span className="text-xs text-muted-foreground">Ask to fix missing areas or errors</span>
+                  )}
+                </div>
+              )}
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about this project..."
+                placeholder={selectedReportId ? 'e.g. Fix the report for missing areas, or correct Living room to 28 m²' : 'Ask about this project...'}
                 className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 disabled={sending}
               />

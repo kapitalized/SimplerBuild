@@ -10,6 +10,8 @@ export interface ProjectFromLayout {
   projectAddress?: string | null;
   projectDescription?: string | null;
   projectObjectives?: string | null;
+  country?: string | null;
+  projectStatus?: string | null;
 }
 
 const ProjectContext = createContext<ProjectFromLayout | null>(null);

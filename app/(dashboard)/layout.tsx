@@ -38,15 +38,9 @@ export default async function DashboardLayout({
         <Link href="/dashboard" className="flex items-center" style={{ color: BRAND.colors.primary }}>
           <img src={BRAND.logo} alt={BRAND.name} className="h-7 w-auto" />
         </Link>
-        <nav className="flex items-center gap-4">
-          <Link href="/dashboard/ai/chat" className="text-sm text-muted-foreground hover:text-foreground">
-            AI Chat
-          </Link>
-          <Link href="/dashboard/ai/reports" className="text-sm text-muted-foreground hover:text-foreground">
-            AI Reports
-          </Link>
-          <Link href="/dashboard/ai/documents" className="text-sm text-muted-foreground hover:text-foreground">
-            Documents
+        <nav className="flex items-center gap-6">
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            Dashboard
           </Link>
           <Link href="/dashboard/team" className="text-sm text-muted-foreground hover:text-foreground">
             Team

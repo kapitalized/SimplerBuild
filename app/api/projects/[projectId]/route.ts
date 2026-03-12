@@ -26,7 +26,10 @@ export async function GET(
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
   const ok = await ensureProjectOwnership(projectId, session.userId);
   if (!ok) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-  const [project] = await db.select().from(project_main).where(eq(project_main.id, projectId));
+  const [project] = await db
+    .select()
+    .from(project_main)
+    .where(eq(project_main.id, projectId));
   if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   return NextResponse.json(project);
 }
@@ -50,6 +53,8 @@ export async function PATCH(
   if (typeof body.projectAddress === 'string') updates.projectAddress = body.projectAddress.trim() || null;
   if (typeof body.projectDescription === 'string') updates.projectDescription = body.projectDescription.trim().slice(0, 500) || null;
   if (typeof body.projectObjectives === 'string') updates.projectObjectives = body.projectObjectives.trim().slice(0, 2000) || null;
+  if (typeof body.country === 'string') updates.country = body.country.trim() || null;
+  if (typeof body.projectStatus === 'string') updates.projectStatus = body.projectStatus.trim() || null;
   if (Object.keys(updates).length === 0) {
     const [project] = await db.select().from(project_main).where(eq(project_main.id, projectId));
     return NextResponse.json(project ?? {});

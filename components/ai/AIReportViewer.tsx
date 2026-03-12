@@ -1,12 +1,22 @@
 'use client';
 
 /**
- * Report viewer: markdown content, data table, and CSV export.
+ * Report viewer: markdown content, data table, pipeline step trace, and CSV export.
  */
 
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { downloadCSV } from '@/lib/ai/export';
 import type { AuditItem } from '@/lib/ai/citation-audit';
+
+export interface StepTraceEntry {
+  step: string;
+  model: string;
+  promptPreview: string;
+  responsePreview: string;
+  tokenUsage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number; cost?: number };
+  error?: string;
+}
 
 export interface ReportForViewer {
   id?: string;
@@ -30,6 +40,7 @@ export interface ReportForViewer {
       analysis?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
       synthesis?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
     };
+    stepTrace?: StepTraceEntry[];
   };
 }
 
@@ -40,6 +51,51 @@ interface AIReportViewerProps {
 
 function isAuditItem(x: unknown): x is AuditItem {
   return typeof x === 'object' && x !== null && 'label' in x && 'value' in x;
+}
+
+function PipelineStepsSection({ steps }: { steps: StepTraceEntry[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border rounded-lg bg-muted/20 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/30"
+      >
+        <span>Pipeline steps (what happened at each AI step)</span>
+        <span className="text-muted-foreground">{open ? '▼' : '▶'}</span>
+      </button>
+      {open && (
+        <div className="border-t divide-y px-4 py-2 space-y-3">
+          {steps.map((s, i) => (
+            <div key={i} className="pt-2 first:pt-0">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-foreground">
+                <span className="rounded bg-primary/15 px-1.5 py-0.5">{s.step}</span>
+                <span className="text-muted-foreground">{s.model}</span>
+                {s.tokenUsage && (
+                  <span className="text-muted-foreground">
+                    {s.tokenUsage.prompt_tokens} in / {s.tokenUsage.completion_tokens} out
+                    {s.tokenUsage.cost != null && ` · $${s.tokenUsage.cost.toFixed(4)}`}
+                  </span>
+                )}
+                {s.error && <span className="text-destructive">Error: {s.error}</span>}
+              </div>
+              <div className="mt-1.5 grid gap-1.5 text-xs">
+                <div>
+                  <span className="text-muted-foreground font-medium">Prompt (preview):</span>
+                  <pre className="mt-0.5 p-2 rounded bg-muted/50 overflow-x-auto whitespace-pre-wrap break-words max-h-24 overflow-y-auto">{s.promptPreview || '—'}</pre>
+                </div>
+                <div>
+                  <span className="text-muted-foreground font-medium">Response (preview):</span>
+                  <pre className="mt-0.5 p-2 rounded bg-muted/50 overflow-x-auto whitespace-pre-wrap break-words max-h-32 overflow-y-auto">{s.responsePreview || (s.error ? '—' : '—')}</pre>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AIReportViewer({ report, isLoading }: AIReportViewerProps) {
@@ -88,6 +144,9 @@ export default function AIReportViewer({ report, isLoading }: AIReportViewerProp
             )}
           </ul>
         </div>
+      )}
+      {run?.stepTrace && run.stepTrace.length > 0 && (
+        <PipelineStepsSection steps={run.stepTrace} />
       )}
       {content ? (
         <div className="prose prose-sm dark:prose-invert max-w-none">

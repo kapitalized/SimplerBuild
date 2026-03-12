@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * Fix Payload importMap.js so Next.js can resolve admin-payload components.
- * Payload generate:importmap writes 'components/admin-payload/...' which Next
- * can't resolve; this script adds the @/ prefix to those import paths.
- *
- * Run after: npx payload generate:importmap
- * Or use: npm run payload:importmap
+ * Fix Payload importMap.js if it was generated with old paths.
+ * Admin components now live at app/(payload)/admin/_components/ and use
+ * relative paths (./_components/...) so the generator does not need patching.
+ * This script only runs when the old 'components/admin-payload/' pattern
+ * appears (e.g. after reverting config). Run: npm run fix:importmap
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -25,4 +24,4 @@ if (!content.includes(bad)) {
 
 const updated = content.replaceAll(bad, good);
 writeFileSync(importMapPath, updated, 'utf8');
-console.log('fix-importmap: Fixed admin importMap.js (added @/ to admin-payload imports).');
+console.log('fix-importmap: Patched old admin-payload paths. Prefer using ./_components/ in config so regeneration works without this.');

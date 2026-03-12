@@ -34,8 +34,9 @@ export function projectPath(p: { shortId?: string | null; slug?: string | null; 
 /** Build project sub-path e.g. /project/abc123/my-building/chat */
 export function projectSubPath(
   p: { shortId?: string | null; slug?: string | null; id: string },
-  segment: 'chat' | 'documents' | 'reports'
+  segment: 'chat' | 'documents' | 'reports' | 'quantities'
 ): string {
   if (p.shortId && p.slug) return `/project/${p.shortId}/${p.slug}/${segment}`;
-  return `/dashboard/ai/${segment === 'documents' ? 'documents' : segment === 'reports' ? 'reports' : 'chat'}?projectId=${p.id}`;
+  const map: Record<string, string> = { documents: 'documents', reports: 'reports', chat: 'chat', quantities: 'reports' };
+  return `/dashboard/ai/${map[segment] ?? 'reports'}?projectId=${p.id}`;
 }

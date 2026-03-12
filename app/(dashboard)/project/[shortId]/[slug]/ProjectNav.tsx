@@ -1,21 +1,42 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useProject } from './ProjectProvider';
+
+const baseLink = 'rounded-lg px-3 py-2 text-sm font-medium transition-colors';
+const activeLink = 'bg-primary text-primary-foreground';
+const inactiveLink = 'text-muted-foreground hover:bg-muted hover:text-foreground';
 
 export function ProjectNav({ shortId, slug }: { shortId: string; slug: string }) {
   const project = useProject();
+  const pathname = usePathname();
   const base = `/project/${shortId}/${slug}`;
+  const is = (segment: string) => pathname === `${base}/${segment}` || (segment === '' && pathname === base);
   return (
-    <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-      <Link href="/dashboard" className="hover:text-foreground">Dashboard</Link>
-      <span>/</span>
-      <span className="font-medium text-foreground truncate max-w-[200px]">
+    <nav className="flex flex-wrap items-center gap-1 border-b pb-2 mb-4">
+      <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground mr-2">
+        ← Dashboard
+      </Link>
+      <span className="text-muted-foreground mr-2">/</span>
+      <span className="font-medium text-foreground truncate max-w-[180px] mr-4">
         {project?.projectName ?? slug}
       </span>
-      <Link href={`${base}/documents`} className="hover:text-foreground">Documents</Link>
-      <Link href={`${base}/reports`} className="hover:text-foreground">Reports</Link>
-      <Link href={`${base}/chat`} className="hover:text-foreground">Chat</Link>
+      <Link href={base} className={`${baseLink} ${is('') ? activeLink : inactiveLink}`}>
+        Overview
+      </Link>
+      <Link href={`${base}/documents`} className={`${baseLink} ${is('documents') ? activeLink : inactiveLink}`}>
+        Documents
+      </Link>
+      <Link href={`${base}/quantities`} className={`${baseLink} ${is('quantities') ? activeLink : inactiveLink}`}>
+        Quantities
+      </Link>
+      <Link href={`${base}/reports`} className={`${baseLink} ${is('reports') ? activeLink : inactiveLink}`}>
+        Reports
+      </Link>
+      <Link href={`${base}/chat`} className={`${baseLink} ${is('chat') ? activeLink : inactiveLink}`}>
+        Chat
+      </Link>
     </nav>
   );
 }

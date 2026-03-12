@@ -47,7 +47,9 @@ export const project_main = pgTable('project_main', {
   projectName: text('project_name').notNull(),
   projectAddress: text('project_address'),
   projectDescription: text('project_description'), // short description
-  projectObjectives: text('project_objectives'), // what the user wants to achieve (e.g. cost estimates from drawings)
+  projectObjectives: text('project_objectives'), // optional; kept for chat context
+  country: text('country'),
+  projectStatus: text('project_status'), // e.g. Design, Pre-construction, In construction, Completed
   shortId: text('short_id'), // unique 6-char for URLs e.g. /project/abc123/my-building
   slug: text('slug'), // URL slug from name e.g. my-building
   status: text('status').default('active'), // 'active', 'archived', 'completed'
@@ -92,6 +94,8 @@ export const ai_analyses = pgTable('ai_analyses', {
   tokenUsage: jsonb('token_usage'),
   /** Model ids used for this run: { extraction, analysis, synthesis }. */
   modelsUsed: jsonb('models_used'),
+  /** Per-step trace: prompt preview, response preview, tokens (for debugging and quality). */
+  stepTrace: jsonb('step_trace'),
 });
 
 export const ai_knowledge_nodes = pgTable('ai_knowledge_nodes', {

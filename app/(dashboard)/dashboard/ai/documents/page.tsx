@@ -173,62 +173,90 @@ export function AIDocumentsContent({ initialProjectId }: AIDocumentsContentProps
       )}
 
       {projectId && (
-        <>
-          <div
-            role="button"
-            tabIndex={0}
-            onDragOver={onDragOver}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${dragOver ? 'bg-blue-500/15 border-blue-500 text-blue-700 dark:bg-blue-500/20 dark:border-blue-400 dark:text-blue-300' : 'bg-muted/10 hover:bg-muted/20 border-muted-foreground/25'}`}
-          >
-            <label className="cursor-pointer block">
-              <span className={`font-medium ${dragOver ? 'text-blue-700 dark:text-blue-300' : 'text-muted-foreground'}`}>
-                {uploading ? 'Uploading…' : dragOver ? 'Drop to upload' : 'Drop files here or click to select'}
-              </span>
-              <input
-                type="file"
-                className="hidden"
-                disabled={uploading}
-                onChange={onInputChange}
-                accept=".pdf,.png,.jpg,.jpeg,.webp"
-              />
-            </label>
-          </div>
-
-          <div className="border rounded-lg bg-card">
+        <div className="grid gap-6 lg:grid-cols-[1fr,320px]">
+          {/* Left: Documents list */}
+          <div className="border rounded-lg bg-card overflow-hidden min-w-0">
             <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="font-semibold text-sm">Uploaded files</h2>
-              <Link href={`/dashboard/ai/reports?projectId=${projectId}`} className="text-sm text-primary hover:underline">
-                View reports
-              </Link>
+              <div>
+                <h2 className="font-semibold">Documents</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">All uploaded files for this project</p>
+              </div>
+              {initialProjectId && (
+                <Link href={`/dashboard/ai/reports?projectId=${projectId}`} className="text-sm text-primary hover:underline shrink-0">
+                  View reports
+                </Link>
+              )}
             </div>
             {loadingFiles ? (
               <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>
             ) : files.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">No files yet. Upload above.</div>
+              <div className="p-8 text-center text-sm text-muted-foreground">No documents yet. Upload a file in the panel on the right.</div>
             ) : (
-              <ul className="divide-y">
-                {files.map((f) => (
-                  <li key={f.id} className="p-4 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{f.fileName}</p>
-                      <p className="text-xs text-muted-foreground">{f.fileType} {f.fileSize != null ? ` · ${(f.fileSize / 1024).toFixed(1)} KB` : ''}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => runAnalysis(f)}
-                      disabled={analyzingId !== null}
-                      className="text-sm px-3 py-1.5 rounded-md border bg-primary text-primary-foreground disabled:opacity-50 shrink-0"
-                    >
-                      {analyzingId === f.id ? 'Running…' : 'Run analysis'}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-3 font-medium">File name</th>
+                      <th className="text-left p-3 font-medium">Type</th>
+                      <th className="text-left p-3 font-medium">Size</th>
+                      <th className="text-left p-3 font-medium">Uploaded</th>
+                      <th className="text-right p-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {files.map((f) => (
+                      <tr key={f.id} className="border-b last:border-0 hover:bg-muted/30">
+                        <td className="p-3 font-medium truncate max-w-[200px]" title={f.fileName}>{f.fileName}</td>
+                        <td className="p-3 text-muted-foreground">{f.fileType}</td>
+                        <td className="p-3 text-muted-foreground">{f.fileSize != null ? `${(f.fileSize / 1024).toFixed(1)} KB` : '—'}</td>
+                        <td className="p-3 text-muted-foreground">{f.uploadedAt ? new Date(f.uploadedAt).toLocaleDateString() : '—'}</td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => runAnalysis(f)}
+                            disabled={analyzingId !== null}
+                            className="text-sm px-3 py-1.5 rounded-md border bg-primary text-primary-foreground disabled:opacity-50"
+                          >
+                            {analyzingId === f.id ? 'Running…' : 'Run analysis'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-        </>
+
+          {/* Right: Upload new document */}
+          <div className="lg:max-w-[320px]">
+            <div className="border rounded-lg bg-card overflow-hidden p-4">
+              <h2 className="font-semibold text-lg mb-2">Upload new document</h2>
+              <p className="text-sm text-muted-foreground mb-4">PDF or image. Then run analysis from the list.</p>
+              <div
+                role="button"
+                tabIndex={0}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
+                className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${dragOver ? 'bg-blue-500/15 border-blue-500 text-blue-700 dark:bg-blue-500/20 dark:border-blue-400 dark:text-blue-300' : 'bg-muted/10 hover:bg-muted/20 border-muted-foreground/25'}`}
+              >
+                <label className="cursor-pointer block">
+                  <span className={`font-medium block ${dragOver ? 'text-blue-700 dark:text-blue-300' : 'text-muted-foreground'}`}>
+                    {uploading ? 'Uploading…' : dragOver ? 'Drop to upload' : 'Drop file here or click to select'}
+                  </span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={onInputChange}
+                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {!projectId && projects.length === 0 && (

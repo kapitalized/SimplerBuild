@@ -4,7 +4,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionForApi } from '@/lib/auth/session';
 import { db } from '@/lib/db';
-import { chat_threads, chat_messages, project_main, project_files, ai_analyses } from '@/lib/db/schema';
+import { chat_threads, chat_messages, project_main, project_files, ai_analyses, report_generated } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { callOpenRouter, isOpenRouterConfigured } from '@/lib/ai/openrouter';
 import { getAIModelConfig } from '@/lib/ai/model-config';
@@ -53,6 +53,7 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const content = typeof body.content === 'string' ? body.content.trim() : '';
   if (!content) return NextResponse.json({ error: 'content required' }, { status: 400 });
+  const reportId = typeof body.reportId === 'string' ? body.reportId.trim() || null : null;
 
   const projectId = access.thread.projectId;
   const [project] = await db
@@ -94,7 +95,39 @@ export async function POST(
   } else {
     refLines.push('Reports and analyses: none yet.');
   }
-  const ragContext = `Reference — use this when answering:\n${refLines.join('\n')}`;
+  if (reportId) {
+    const [report] = await db
+      .select({
+        reportTitle: report_generated.reportTitle,
+        content: report_generated.content,
+        projectId: report_generated.projectId,
+        analysisSourceId: report_generated.analysisSourceId,
+      })
+      .from(report_generated)
+      .where(eq(report_generated.id, reportId));
+    if (report?.projectId === projectId) {
+      let reportBlock = `\n\n---\nReport selected for refinement (user may ask you to fix or correct this):\nTitle: ${report.reportTitle}\n\n`;
+      if (report.content) reportBlock += `Content:\n${report.content}\n\n`;
+      if (report.analysisSourceId) {
+        const [analysis] = await db
+          .select({ analysisResult: ai_analyses.analysisResult })
+          .from(ai_analyses)
+          .where(eq(ai_analyses.id, report.analysisSourceId));
+        const result = analysis?.analysisResult as { items?: Array<{ label?: string; value?: number; unit?: string }> } | undefined;
+        const items = result?.items ?? [];
+        if (items.length > 0) {
+          reportBlock += 'Quantities table (label | value | unit):\n';
+          items.forEach((i) => { reportBlock += `${i.label ?? ''}\t${i.value ?? ''}\t${i.unit ?? ''}\n`; });
+        }
+      }
+      refLines.push(reportBlock);
+    }
+  }
+  let ragContext = `Reference — use this when answering:\n${refLines.join('\n')}`;
+  const maxRefChars = 14_000;
+  if (ragContext.length > maxRefChars) {
+    ragContext = ragContext.slice(0, maxRefChars) + '\n\n[Reference truncated for length.]';
+  }
 
   const existing = await db
     .select({ role: chat_messages.role, content: chat_messages.content })
@@ -108,19 +141,31 @@ export async function POST(
   if (isOpenRouterConfigured()) {
     try {
       const modelConfig = await getAIModelConfig();
+      const model = modelConfig.chat?.trim() || 'openai/gpt-4o-mini';
       const messages = [
-        { role: 'system' as const, content: `You are a helpful assistant for a construction/estimation app. Answer using only the following reference (uploaded docs, reports, and the user's messages). If something is not in the reference, say so.\n\n${ragContext}` },
+        { role: 'system' as const, content: `You are a helpful assistant for a construction/estimation app. Answer using only the following reference (uploaded docs, reports, and the user's messages). If something is not in the reference, say so.
+When the user has selected a report for refinement, they may ask you to fix errors (e.g. missing areas, wrong numbers). Provide a corrected version: give the full revised Markdown report or quantities table they can copy and use. Use the same format as the original (Markdown table with columns like Item, Value, Unit).\n\n${ragContext}` },
         ...existing.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
         { role: 'user' as const, content },
       ];
-      const { content } = await callOpenRouter({
-        model: modelConfig.chat,
+      const result = await callOpenRouter({
+        model,
         messages,
         max_tokens: 1024,
       });
-      assistantContent = content;
-    } catch {
-      assistantContent = 'Sorry, I could not generate a response. Please try again.';
+      assistantContent = result.content;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('[Chat] OpenRouter error:', message);
+      if (message.includes('401') || message.includes('Unauthorized')) {
+        assistantContent = 'API key invalid or missing. Check OPENROUTER_API_KEY in .env.local.';
+      } else if (message.includes('429')) {
+        assistantContent = 'Rate limit reached. Please try again in a moment.';
+      } else if (message.includes('context') || message.includes('token') || message.includes('413')) {
+        assistantContent = 'Reference content is too long. Try with fewer reports or a shorter question.';
+      } else {
+        assistantContent = `Sorry, I could not generate a response. (${message.slice(0, 120)}${message.length > 120 ? '…' : ''})`;
+      }
     }
   } else {
     assistantContent = 'Chat is available when OPENROUTER_API_KEY is set. Use project Reports for analysis results.';

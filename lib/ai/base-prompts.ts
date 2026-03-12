@@ -17,7 +17,8 @@ Use the extraction id as citation_id when the value comes from that item. Be pre
 
   SYNTHESIS: `You are an expert at writing short construction and quantity takeoff reports.
 Your task: turn the analysis items into a clear, concise Markdown report: brief summary, a table of quantities (item, value, unit), and if there are critical warnings, add a "CRITICAL WARNING" section.
-Use Markdown tables and headings. Keep the report scannable and professional.`,
+Use Markdown tables and headings. Keep the report scannable and professional.
+Important: In the quantities table, every row must show a numeric value. Use 0 if a value is missing; never write "nil", "null", "N/A", or leave value cells empty.`,
 } as const;
 
 export type PipelineStep = keyof typeof SYSTEM_PROMPTS;

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
+import { User } from 'lucide-react';
 
 interface UserMenuProps {
   userEmail?: string | null;
@@ -32,8 +33,8 @@ export function UserMenu({ userEmail, useNeonAuth, signOutAction }: UserMenuProp
         aria-haspopup="true"
         aria-label="User menu"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
-          {userEmail?.[0]?.toUpperCase() ?? '?'}
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary" title={userEmail ?? 'User menu'}>
+          <User className="h-5 w-5" aria-hidden />
         </span>
       </button>
       {open && (
@@ -62,14 +63,16 @@ export function UserMenu({ userEmail, useNeonAuth, signOutAction }: UserMenuProp
           </Link>
           <div className="border-t pt-1">
             {useNeonAuth ? (
-              <Link
-                href="/api/auth/sign-out"
-                className="block px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-              >
-                Log out
-              </Link>
+              <form action="/api/auth/sign-out" method="post" className="block">
+                <button
+                  type="submit"
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                >
+                  Log out
+                </button>
+              </form>
             ) : signOutAction ? (
               <form action={signOutAction} className="block">
                 <button
@@ -82,13 +85,16 @@ export function UserMenu({ userEmail, useNeonAuth, signOutAction }: UserMenuProp
                 </button>
               </form>
             ) : (
-              <Link
-                href="/api/auth/sign-out"
-                className="block px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                role="menuitem"
-              >
-                Log out
-              </Link>
+              <form action="/api/auth/sign-out" method="post" className="block">
+                <button
+                  type="submit"
+                  className="w-full px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                >
+                  Log out
+                </button>
+              </form>
             )}
           </div>
         </div>

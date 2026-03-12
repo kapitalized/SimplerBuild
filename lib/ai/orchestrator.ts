@@ -72,6 +72,18 @@ export interface PipelineTokenUsage {
   total_cost?: number;
 }
 
+/** Per-step trace for observability: what was sent and what came back. */
+export interface StepTraceEntry {
+  step: 'EXTRACTION' | 'ANALYSIS' | 'SYNTHESIS';
+  model: string;
+  /** First ~300 chars of user prompt (system prompt not included to save space). */
+  promptPreview: string;
+  /** First ~600 chars of model response. */
+  responsePreview: string;
+  tokenUsage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number; cost?: number };
+  error?: string;
+}
+
 export interface PipelineResult {
   status: TaskStatus;
   taskId: string;
@@ -80,6 +92,8 @@ export interface PipelineResult {
   final_analysis: AnalysisResult & { synthesis?: SynthesisResult };
   is_verified: false;
   tokenUsage?: PipelineTokenUsage;
+  /** Per-step trace for debugging and improving quality. */
+  stepTrace?: StepTraceEntry[];
 }
 
 function stubExtraction(): ExtractionResult {
@@ -124,6 +138,8 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
     total_tokens: 0,
     total_cost: undefined,
   };
+  const stepTrace: StepTraceEntry[] = [];
+  const pushTrace = (entry: StepTraceEntry) => stepTrace.push(entry);
 
   if (hasKey) {
     try {
@@ -151,9 +167,11 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
         usageByStep.total_tokens += extUsage.total_tokens;
         if (extUsage.cost != null) usageByStep.total_cost = (usageByStep.total_cost ?? 0) + extUsage.cost;
       }
+      pushTrace({ step: 'EXTRACTION', model: extractionModel, promptPreview: extractionPrompt.slice(0, 300), responsePreview: content.slice(0, 600), tokenUsage: extUsage });
       appendAuditEntry(createAuditEntry({ runId, taskId, model: extractionModel, step: 'EXTRACTION', orgId: params.orgId, documentId }));
-    } catch {
+    } catch (e) {
       raw_extraction = stubExtraction();
+      pushTrace({ step: 'EXTRACTION', model: extractionModel, promptPreview: extractionPrompt.slice(0, 300), responsePreview: '', error: e instanceof Error ? e.message : String(e) });
     }
   } else {
     raw_extraction = stubExtraction();
@@ -183,8 +201,8 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
   if (pythonResults && pythonResults.length > 0) {
     analysisItems = pythonResults.map((r) => ({
       id: r.id ?? r.label,
-      label: r.label,
-      value: r.area_m2,
+      label: r.label ?? '',
+      value: Number(r.area_m2 ?? 0),
       unit: 'm²' as const,
       citation_id: r.id ?? r.label,
       coordinate_set: undefined,
@@ -209,19 +227,27 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
           usageByStep.total_tokens += analysisUsage.total_tokens;
           if (analysisUsage.cost != null) usageByStep.total_cost = (usageByStep.total_cost ?? 0) + analysisUsage.cost;
         }
+        pushTrace({ step: 'ANALYSIS', model: analysisModel, promptPreview: analysisPrompt.slice(0, 300), responsePreview: content.slice(0, 600), tokenUsage: analysisUsage });
         appendAuditEntry(createAuditEntry({ runId, taskId, model: analysisModel, step: 'ANALYSIS', orgId: params.orgId, documentId }));
-      } catch {
+      } catch (e) {
         analysisItems = stubAnalysis(raw_extraction).items;
+        pushTrace({ step: 'ANALYSIS', model: analysisModel, promptPreview: analysisPrompt.slice(0, 300), responsePreview: '', error: e instanceof Error ? e.message : String(e) });
       }
     } else {
       analysisItems = stubAnalysis(raw_extraction).items;
     }
   }
 
-  // Step 3: Synthesis + citation audit
-  const audit = runCitationAudit(analysisItems, benchmarks);
+  // Step 3: Synthesis + citation audit — ensure no null/undefined values so synthesis never sees "nil"
+  const normalizedItems: AuditItem[] = analysisItems.map((i) => ({
+    ...i,
+    value: Number(i.value ?? 0),
+    label: String(i.label ?? ''),
+    unit: i.unit ?? '—',
+  }));
+  const audit = runCitationAudit(normalizedItems, benchmarks);
   const synthesisBase = overrides?.synthesis ?? 'Format these analysis results as a short Markdown report.';
-  const synthesisPrompt = `${synthesisBase} Items: ${JSON.stringify(analysisItems)}. ${audit.criticalWarnings.length > 0 ? `Add a CRITICAL WARNING section for: ${audit.criticalWarnings.map((w) => w.message).join('; ')}` : ''}`;
+  const synthesisPrompt = `${synthesisBase} Items: ${JSON.stringify(normalizedItems)}. ${audit.criticalWarnings.length > 0 ? `Add a CRITICAL WARNING section for: ${audit.criticalWarnings.map((w) => w.message).join('; ')}` : ''}`;
   let content_md: string;
   const synthesisModel = models.synthesis;
 
@@ -241,17 +267,19 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
         usageByStep.total_tokens += synUsage.total_tokens;
         if (synUsage.cost != null) usageByStep.total_cost = (usageByStep.total_cost ?? 0) + synUsage.cost;
       }
+      pushTrace({ step: 'SYNTHESIS', model: synthesisModel, promptPreview: synthesisPrompt.slice(0, 300), responsePreview: synContent.slice(0, 600), tokenUsage: synUsage });
       appendAuditEntry(createAuditEntry({ runId, taskId, model: synthesisModel, step: 'SYNTHESIS', orgId: params.orgId, documentId }));
-    } catch {
-      content_md = formatStubReport(analysisItems, audit);
+    } catch (e) {
+      content_md = formatStubReport(normalizedItems, audit);
+      pushTrace({ step: 'SYNTHESIS', model: synthesisModel, promptPreview: synthesisPrompt.slice(0, 300), responsePreview: '', error: e instanceof Error ? e.message : String(e) });
     }
   } else {
-    content_md = formatStubReport(analysisItems, audit);
+    content_md = formatStubReport(normalizedItems, audit);
   }
 
   const synthesis: SynthesisResult = {
     content_md,
-    data_payload: analysisItems,
+    data_payload: normalizedItems,
     criticalWarnings: audit.criticalWarnings,
   };
 
@@ -260,9 +288,10 @@ export async function runPipeline(params: OrchestratorParams): Promise<PipelineR
     taskId,
     runId,
     raw_extraction,
-    final_analysis: { items: analysisItems, synthesis },
+    final_analysis: { items: normalizedItems, synthesis },
     is_verified: false,
     tokenUsage: usageByStep.total_tokens > 0 ? usageByStep : undefined,
+    stepTrace: stepTrace.length > 0 ? stepTrace : undefined,
   };
 }
 

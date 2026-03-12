@@ -57,6 +57,20 @@
       "when": 1773380000000,
       "tag": "0007_project_objectives",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773390000000,
+      "tag": "0008_country_project_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773400000000,
+      "tag": "0009_analysis_step_trace",
+      "breakpoints": true
     }
   ]
 }

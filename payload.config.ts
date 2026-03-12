@@ -17,48 +17,49 @@ export default buildConfig({
     components: {
       graphics: {
         Logo: {
-          path: 'components/admin-payload/AdminLogo.tsx',
+          path: './_components/AdminLogo.tsx',
         },
       },
+      afterNavLinks: ['./_components/AdminNavLinks.tsx#AdminNavLinks'],
       views: {
         AppDashboard: {
-          Component: 'components/admin-payload/AdminDashboardView.tsx#AdminDashboardView',
+          Component: './_components/WithLayoutViews.tsx#AdminDashboardViewWithLayout',
           path: '/',
           exact: true,
           meta: { title: 'App monitoring', description: 'Links to app users, projects, AI logs, and settings' },
         },
         AppUsers: {
-          Component: 'components/admin-payload/AppUsersView.tsx#AppUsersView',
+          Component: './_components/WithLayoutViews.tsx#AppUsersViewWithLayout',
           path: '/app-users',
           exact: true,
           meta: { title: 'App users', description: 'Users who sign in to the app' },
         },
         AIModels: {
-          Component: 'components/admin-payload/AIModelsView.tsx#AIModelsView',
+          Component: './_components/WithLayoutViews.tsx#AIModelsViewWithLayout',
           path: '/ai-models',
           exact: true,
           meta: { title: 'AI models (OpenRouter)', description: 'Pipeline and chat model config' },
         },
         RunLogs: {
-          Component: 'components/admin-payload/RunLogsView.tsx#RunLogsView',
+          Component: './_components/WithLayoutViews.tsx#RunLogsViewWithLayout',
           path: '/run-logs',
           exact: true,
           meta: { title: 'Run logs', description: 'AI pipeline runs and token usage' },
         },
         Projects: {
-          Component: 'components/admin-payload/ProjectsView.tsx#ProjectsView',
+          Component: './_components/WithLayoutViews.tsx#ProjectsViewWithLayout',
           path: '/projects',
           exact: true,
           meta: { title: 'Projects', description: 'App projects list' },
         },
         Chats: {
-          Component: 'components/admin-payload/ChatsView.tsx#ChatsView',
+          Component: './_components/WithLayoutViews.tsx#ChatsViewWithLayout',
           path: '/chats',
           exact: true,
           meta: { title: 'Chats', description: 'Chat threads by project' },
         },
         Files: {
-          Component: 'components/admin-payload/FilesView.tsx#FilesView',
+          Component: './_components/WithLayoutViews.tsx#FilesViewWithLayout',
           path: '/files',
           exact: true,
           meta: { title: 'Files', description: 'Project file uploads' },
