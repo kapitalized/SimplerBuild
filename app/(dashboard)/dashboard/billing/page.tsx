@@ -43,9 +43,12 @@ export default function BillingPage() {
     async function load() {
       try {
         const res = await fetch('/api/billing/status', { credentials: 'include' });
-        if (!res.ok) throw new Error(res.status === 401 ? 'Please sign in.' : 'Failed to load billing');
-        const data: StatusRes = await res.json();
-        if (!cancelled) setStatus(data);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = data.detail ?? data.error ?? (res.status === 401 ? 'Please sign in.' : 'Failed to load billing');
+          throw new Error(msg);
+        }
+        if (!cancelled) setStatus(data as StatusRes);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load');
       } finally {
