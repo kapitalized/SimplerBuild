@@ -129,19 +129,20 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* 1. Choose plan — subscription: plan cards for owners */}
+      {/* 1. Choose plan — single paid Starter plan for owners */}
       {canManage && (
         <div className="rounded-lg border bg-card p-4">
           <h2 className="font-medium">Subscription</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Select a plan to subscribe. You’ll complete payment on Stripe.
+            Subscribe to the Starter plan. You’ll complete payment on Stripe.
           </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {(['starter', 'pro'] as const).map((tier) => {
+            {(() => {
+              const tier: PlanTier = 'starter';
               const info = PLAN_DISPLAY[tier];
               const isCurrent = active && currentTier === tier;
               return (
-                <div key={tier} className="rounded-md border bg-muted/30 p-4 flex flex-col">
+                <div className="rounded-md border bg-muted/30 p-4 flex flex-col">
                   <h3 className="font-semibold">{info.name}</h3>
                   <p className="mt-1 text-lg font-medium">{info.price}</p>
                   <p className="mt-1 text-sm text-muted-foreground">{info.description}</p>
@@ -160,7 +161,7 @@ export default function BillingPage() {
                   )}
                 </div>
               );
-            })}
+            })()}
           </div>
         </div>
       )}
