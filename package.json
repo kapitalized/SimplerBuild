@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/fix-importmap.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/fix-importmap.mjs",
     "build": "next build",
     "payload": "payload",
     "payload:importmap": "payload generate:importmap && node scripts/fix-importmap.mjs",

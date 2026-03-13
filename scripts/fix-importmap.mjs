@@ -14,14 +14,21 @@ import path from 'path';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const importMapPath = path.join(__dirname, '..', 'app', '(payload)', 'admin', 'importMap.js');
 
-const content = readFileSync(importMapPath, 'utf8');
-const bad = "from 'components/admin-payload/";
-const good = "from '@/components/admin-payload/";
+let content = readFileSync(importMapPath, 'utf8');
+let changed = false;
 
-if (!content.includes(bad)) {
-  process.exit(0);
+// Fix 1: Generator sometimes writes ../../../_components/ (wrong). Should be ./_components/
+if (content.includes("from '../../../_components/")) {
+  content = content.replaceAll("from '../../../_components/", "from './_components/");
+  changed = true;
+}
+// Fix 2: Legacy pattern from before move to _components
+if (content.includes("from 'components/admin-payload/")) {
+  content = content.replaceAll("from 'components/admin-payload/", "from '@/components/admin-payload/");
+  changed = true;
 }
 
-const updated = content.replaceAll(bad, good);
-writeFileSync(importMapPath, updated, 'utf8');
-console.log('fix-importmap: Patched old admin-payload paths. Prefer using ./_components/ in config so regeneration works without this.');
+if (changed) {
+  writeFileSync(importMapPath, content, 'utf8');
+  console.log('fix-importmap: Corrected import paths in importMap.js.');
+}
