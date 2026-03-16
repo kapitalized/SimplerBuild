@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       sort: 'slug',
     });
     const pages = result.docs.map((doc) => {
-      const d = doc as Record<string, unknown>;
+      const d = doc as unknown as Record<string, unknown>;
       return {
         id: String(doc.id),
         title: (d.title as string) ?? '',
