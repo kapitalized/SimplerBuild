@@ -13,33 +13,30 @@ import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-// Write to both path variants so the file Next.js reads is fixed (Windows can have two path forms).
-const importMapPaths = [
-  path.join(root, 'app', '(payload)', 'admin', 'importMap.js'),
-  path.join(root, 'app') + '/(payload)/admin/importMap.js',
-];
+// Canonical path Next.js resolves: app/(payload)/admin/importMap.js
+const importMapPath = path.join(root, 'app', '(payload)', 'admin', 'importMap.js');
 
 let content;
 try {
-  content = readFileSync(importMapPaths[0], 'utf8');
+  content = readFileSync(importMapPath, 'utf8');
 } catch (e) {
-  try {
-    content = readFileSync(importMapPaths[1], 'utf8');
-  } catch {
-    throw e;
-  }
+  console.error('fix-importmap: Could not read importMap.js at', importMapPath, e.message);
+  process.exit(1);
 }
+
 const before = content;
 // Fix: Generator writes ../../../_components/ (wrong). Use ./_components/ relative to importMap.js.
 content = content.replace(/from ['"](\.\.\/)+_components\//g, "from './_components/");
 if (content.includes("from 'components/admin-payload/")) {
   content = content.replaceAll("from 'components/admin-payload/", "from '@/components/admin-payload/");
 }
+
 if (content !== before) {
-  for (const p of importMapPaths) {
-    try {
-      writeFileSync(p, content, 'utf8');
-    } catch (_) {}
+  try {
+    writeFileSync(importMapPath, content, 'utf8');
+    console.log('fix-importmap: Corrected import paths in importMap.js.');
+  } catch (e) {
+    console.error('fix-importmap: Could not write importMap.js', e.message);
+    process.exit(1);
   }
-  console.log('fix-importmap: Corrected import paths in importMap.js.');
 }

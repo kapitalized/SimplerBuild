@@ -6,7 +6,7 @@
     "predev": "node scripts/fix-importmap.mjs",
     "dev": "next dev",
     "prebuild": "node scripts/fix-importmap.mjs",
-    "build": "next build",
+    "build": "node scripts/fix-importmap.mjs && next build",
     "payload": "payload",
     "payload:importmap": "payload generate:importmap && node scripts/fix-importmap.mjs",
     "fix:importmap": "node scripts/fix-importmap.mjs",

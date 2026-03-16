@@ -229,8 +229,8 @@ export async function GET(
   }
 
   let items = extractOverlayItems(raw);
-  let windows = extractOverlayWindowsDoors(raw, 'windows');
-  let doors = extractOverlayWindowsDoors(raw, 'doors');
+  const windows = extractOverlayWindowsDoors(raw, 'windows');
+  const doors = extractOverlayWindowsDoors(raw, 'doors');
 
   // If bboxes look like world coords (e.g. meters, values > 1 and < 10000), normalize to 0–1000 per axis for the viewer
   if (items.length > 0) {

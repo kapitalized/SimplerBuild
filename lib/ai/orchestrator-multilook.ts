@@ -915,7 +915,7 @@ function mapRoomsToItems(parsed: Record<string, unknown>): ExtractionResult {
     const n = (labelCount.get(base) ?? 0) + 1;
     labelCount.set(base, n);
   }
-  let runIndex = new Map<string, number>();
+  const runIndex = new Map<string, number>();
   const itemsWithNumberedLabels = items.map((it) => {
     const base = it.label;
     const count = labelCount.get(base) ?? 1;
