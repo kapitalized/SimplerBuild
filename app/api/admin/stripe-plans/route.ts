@@ -48,9 +48,10 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   if (!stripe) return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 });
 
-  let body: { name: string; description?: string; unitAmount: number; currency?: string; interval?: 'month' | 'year' } = {};
+  type BodyType = { name: string; description?: string; unitAmount: number; currency?: string; interval?: 'month' | 'year' };
+  let body: BodyType = {} as BodyType;
   try {
-    body = await request.json();
+    body = (await request.json()) as BodyType;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
