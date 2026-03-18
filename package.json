@@ -6,7 +6,7 @@
     "dev": "node scripts/fix-importmap.mjs && next dev --turbo",
     "dev:fresh": "node scripts/fix-importmap.mjs && node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev --turbo",
     "prebuild": "node scripts/fix-importmap.mjs",
-    "build": "node scripts/fix-importmap.mjs && next build",
+    "build": "node scripts/fix-importmap.mjs && node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next build",
     "payload": "payload",
     "payload:importmap": "payload generate:importmap && node scripts/fix-importmap.mjs",
     "migrate:external-apis": "node scripts/migrate-external-apis.mjs",

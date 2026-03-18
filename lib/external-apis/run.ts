@@ -16,13 +16,22 @@ export interface RunExternalApiResult {
   recordsFetched?: number;
 }
 
-export async function runApiSource(sourceId: string): Promise<RunExternalApiResult> {
+function coerceNumericId(id: string | number): number {
+  if (typeof id === 'number') return id;
+  const n = Number(id);
+  if (!Number.isFinite(n)) throw new Error(`Invalid id: ${id}`);
+  return n;
+}
+
+export async function runApiSource(sourceId: string | number): Promise<RunExternalApiResult> {
   const resolvedConfig = typeof config.then === 'function' ? await config : config;
   const payload = await getPayload({ config: resolvedConfig });
 
+  const sourceIdNum = coerceNumericId(sourceId);
+
   const source = await payload.findByID({
     collection: SOURCES_COLLECTION,
-    id: sourceId,
+    id: sourceIdNum,
   });
   if (!source) {
     return { runId: '', status: 'error', errorMessage: 'Source not found' };
@@ -44,7 +53,7 @@ export async function runApiSource(sourceId: string): Promise<RunExternalApiResu
   const runDoc = await payload.create({
     collection: RUN_COLLECTION,
     data: {
-      source: sourceId,
+      source: sourceIdNum,
       startedAt: startedAt.toISOString(),
       status: 'running',
     },
@@ -76,7 +85,7 @@ export async function runApiSource(sourceId: string): Promise<RunExternalApiResu
 
   await payload.update({
     collection: SOURCES_COLLECTION,
-    id: sourceId,
+    id: sourceIdNum,
     data: { lastRunAt: finishedAt.toISOString() },
   });
 
