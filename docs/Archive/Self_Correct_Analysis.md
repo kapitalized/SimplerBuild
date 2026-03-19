@@ -61,3 +61,4 @@ The app runs validation, optional retry, and result checks so extraction and rep
 5. **Overlay fallback:** If `rawExtraction` in the DB has no boxes, the overlay API parses the extraction step’s `responsePreview` from the step trace. It supports the **rooms + box_2d + canvas_size** schema (converts pixel box_2d to 0–1000 and draws boxes), so boundary boxes can appear even when the stored extraction shape was wrong.
 
 **Where:** `lib/ai/orchestrator.ts` (extraction, retry, merge), `lib/ai/validate-floorplan.ts`, `app/api/reports/[reportId]/overlay/route.ts` (overlay fallback).
+

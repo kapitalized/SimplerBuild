@@ -76,3 +76,4 @@ Use this list to fix (1) no boundary box on overlay, (2) image analysis uncertai
 - **Report:** No "nil"; numeric cells show numbers (or 0/—).
 - **Report:** Areas are non-zero when extraction has boxes (or metadata.approx_area_m2).
 - **Test:** Same plan run via test page produces a result file that Cursor can read and that reflects the above.
+

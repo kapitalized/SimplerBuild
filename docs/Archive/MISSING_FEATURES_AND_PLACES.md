@@ -13,7 +13,7 @@ This doc lists **missing features** from the B2B_Blueprint scaffolding and the *
 **Places to implement:**
 
 | What | Where |
-|------|--------|
+|------|-------|
 | Insert digest after pipeline run | New helper e.g. `lib/ai/persistence.ts` or inside `app/api/ai/run/route.ts`; call `db.insert(ai_digests)` with `projectId`, `fileId`, `rawExtraction`, `summary`. |
 | Insert analysis after pipeline or analyze | Same module or route; `db.insert(ai_analyses)` with `projectId`, `analysisType`, `analysisResult`, `inputSourceIds`. |
 | Insert report after synthesis | `db.insert(report_generated)` with `projectId`, `report_title`, `report_type`, `content`, `analysis_source_id`. |
@@ -184,3 +184,4 @@ This doc lists **missing features** from the B2B_Blueprint scaffolding and the *
 | DB (Neon) | `docs/NEON_SETUP.md` |
 | Payload admin | `docs/PAYLOAD_ADMIN.md` |
 | This file (missing features + places) | `docs/MISSING_FEATURES_AND_PLACES.md` |
+

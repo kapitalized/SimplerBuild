@@ -61,3 +61,4 @@ CREATE TABLE IF NOT EXISTS "logs_reports" (
 ```
 
 Then run analysis again; the error should be gone.
+

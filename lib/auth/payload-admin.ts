@@ -15,8 +15,15 @@ export async function isPayloadAdmin(request: Request): Promise<boolean> {
         cache: 'no-store',
       });
       if (!res.ok) continue;
-      const data = (await res.json()) as { user?: { role?: string } };
-      if (data?.user?.role === 'admin') return true;
+      const data = (await res.json()) as
+        | { user?: { role?: string } }
+        | { role?: string }
+        | { doc?: { role?: string } };
+      const role =
+        (data as { user?: { role?: string } })?.user?.role ??
+        (data as { doc?: { role?: string } })?.doc?.role ??
+        (data as { role?: string })?.role;
+      if (role === 'admin') return true;
     }
   } catch {
     // ignore

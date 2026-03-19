@@ -70,6 +70,13 @@ await run(`DO $$ BEGIN
   ALTER TABLE "external_api_runs" ADD CONSTRAINT "external_api_runs_api_sources_fk" FOREIGN KEY ("api_sources_id") REFERENCES "public"."api_sources"("id") ON DELETE cascade ON UPDATE no action;
 EXCEPTION WHEN duplicate_object THEN null; END $$`);
 
+// Payload expects relationship column to match field name: source -> source_id.
+await run(`ALTER TABLE "external_api_runs" ADD COLUMN IF NOT EXISTS "source_id" integer`);
+await run(`UPDATE "external_api_runs" SET "source_id" = COALESCE("source_id", "api_sources_id") WHERE "source_id" IS NULL AND "api_sources_id" IS NOT NULL`);
+await run(`DO $$ BEGIN
+  ALTER TABLE "external_api_runs" ADD CONSTRAINT "external_api_runs_source_fk" FOREIGN KEY ("source_id") REFERENCES "public"."api_sources"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN null; END $$`);
+
 await run(`ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "api_sources_id" integer`);
 await run(`ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "external_api_runs_id" integer`);
 
@@ -85,6 +92,7 @@ await run(`CREATE INDEX IF NOT EXISTS "api_sources_created_at_idx" ON "api_sourc
 await run(`CREATE INDEX IF NOT EXISTS "external_api_runs_updated_at_idx" ON "external_api_runs" USING btree ("updated_at")`);
 await run(`CREATE INDEX IF NOT EXISTS "external_api_runs_created_at_idx" ON "external_api_runs" USING btree ("created_at")`);
 await run(`CREATE INDEX IF NOT EXISTS "external_api_runs_api_sources_id_idx" ON "external_api_runs" USING btree ("api_sources_id")`);
+await run(`CREATE INDEX IF NOT EXISTS "external_api_runs_source_id_idx" ON "external_api_runs" USING btree ("source_id")`);
 await run(`CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_api_sources_id_idx" ON "payload_locked_documents_rels" USING btree ("api_sources_id")`);
 await run(`CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_external_api_runs_id_idx" ON "payload_locked_documents_rels" USING btree ("external_api_runs_id")`);
 

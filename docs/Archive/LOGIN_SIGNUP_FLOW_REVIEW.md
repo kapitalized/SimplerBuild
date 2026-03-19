@@ -46,3 +46,4 @@ To help with debugging and security, you can log non-success auth responses for 
 - After `const res = await handler.POST(...)`, if `res.status >= 400` and the path includes `sign-in` or `sign-up`, log e.g. `[auth] sign-in failed status=${res.status}` (and optionally a safe error code from the cloned body). Then return the original `res` unchanged.
 
 This gives you a server-side trail of failed attempts without changing the client or the response to the user.
+

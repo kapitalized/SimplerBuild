@@ -105,3 +105,4 @@
 - When the model does not fill `approx_area_m2`, **areas are non-zero** where we can derive them from `box_2d` (with a defined scale).
 - **No zero-only reports** when extraction returned valid rooms and the image was available; validation retry is used only when retry passes validation.
 - Vision extraction uses **Gemini 2.0 Flash** so coordinate quality is consistent regardless of Admin extraction model choice.
+

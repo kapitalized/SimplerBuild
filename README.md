@@ -31,6 +31,7 @@ Next.js 15 (App Router) + Neon / Supabase + Drizzle + Payload. Follow the bluepr
 - **AI template:** For using this repo as a base for other AI apps, see `docs/AI_App_Template_Readiness.md` (env, API, what to replace).
 - **Setup:** Use the `/setup` page; link Neon, Vercel Blob, env vars. See `docs/DATABASE_OPTIONS.md`, `docs/SCHEMA_SETUP.md`.
 - **Payload CMS:** Configure `collections/` and `payload.config.ts` when you need admin/CMS.
+- **Dev + troubleshooting docs:** Start with `docs/ARCHITECTURE.md`, then `docs/DEV_WORKFLOW.md`, `docs/ENV_VARS.md`, `docs/TROUBLESHOOTING.md`.
 - **Health / readiness:** `GET /api/health` (always 200). `GET /api/ready` (200 if DB reachable; for load balancers).
 - **Tests:** `npm run test` (Vitest). See `app/api/health/route.test.ts`.
 - **Chat streaming:** `POST /api/chat/threads/[threadId]/messages` with `?stream=1` or `Accept: text/event-stream` returns SSE; each event is `data: {"content":"..."}`; final event is `data: [DONE]`. See `lib/ai/stream-sse.ts`.

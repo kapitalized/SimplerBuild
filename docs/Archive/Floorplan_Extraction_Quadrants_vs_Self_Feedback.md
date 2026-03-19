@@ -104,3 +104,4 @@ After the first extraction (and optional validation retry), run a **second visio
 | **Look twice (self-feedback)** | Typical plans; fix overlaps, missing rooms, wrong names | Low (reuse pipeline + one extra call) | Add optional second-pass review as above |
 
 Implementing the **second-pass review** gives a clear path to better extraction without the overhead of quadrant-based extraction; we can revisit sections later if needed.
+

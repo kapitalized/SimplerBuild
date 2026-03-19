@@ -19,6 +19,7 @@ export async function GET(request: Request) {
       collection: 'api-sources',
       limit: 100,
       sort: '-updatedAt',
+      overrideAccess: true,
     });
     const sources = result.docs.map((doc) => {
       const d = doc as unknown as Record<string, unknown>;

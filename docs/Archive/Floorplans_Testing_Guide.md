@@ -49,3 +49,4 @@ No code changes are required to use the JSON manually; a future “eval vs groun
 - **Image-only test:** Use **4Bedroom House Floorplan.jpg** (no JSON; good for “does the vision prompt run?” and qualitative check).
 
 All of these work with the current vision extraction prompt (rooms, slabs, openings, normalized bbox 0–1000). The JPEG is fine for the same pipeline; only the presence of a matching JSON distinguishes “has ground truth” vs “image-only”.
+

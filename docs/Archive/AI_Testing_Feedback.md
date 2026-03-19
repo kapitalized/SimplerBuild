@@ -86,3 +86,4 @@ One row = one model run in that batch, plus optional score/winner.
 | Overlays / Judge / RAG triad| Defer until after basic “battle + winner” works |
 
 This keeps the testing logic as a **separate module** (eval tables + eval mode + eval UI) without changing core pipeline behaviour, and uses the simplest methods: one log per run, one batch per comparison, one winner (or score) per run.
+

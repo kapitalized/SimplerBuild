@@ -29,3 +29,4 @@ export const ai_eval_results = pgTable('ai_eval_results', {
 **Imports needed:** `uuid`, `text`, `timestamp`, `doublePrecision` from `drizzle-orm/pg-core`; reference `logs_ai_runs` from your main schema.
 
 **Flow:** Create batch → run N models (each write goes to `logs_ai_runs` with `metadata.evalBatchId`) → insert N rows in `ai_eval_results` → UI shows side-by-side and sets `is_winner`.
+

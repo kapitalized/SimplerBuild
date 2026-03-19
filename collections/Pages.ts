@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { ensurePageSeoFields } from '@/lib/seo/ensure-page-seo';
 
 /**
  * Marketing pages with SEO tab. Used by getPageMetadata when fetching from CMS.
@@ -8,6 +9,15 @@ export const Pages: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'slug', 'updatedAt'],
+  },
+  hooks: {
+    beforeChange: [
+      ({ data, operation }) => {
+        if (operation !== 'create' && operation !== 'update') return data;
+        // Only fill missing values; do not overwrite editor-provided SEO fields.
+        return ensurePageSeoFields(data as Record<string, unknown>);
+      },
+    ],
   },
   fields: [
     { name: 'title', type: 'text', required: true },

@@ -60,3 +60,4 @@ The orchestrator accepts two extraction shapes:
 | Optional | `rooms[].connections`, `rooms[].metadata` (approx_area_m2, length_m, width_m) | `metadata`, confidence |
 
 Internal representation after parsing is always normalized bbox `[ymin, xmin, ymax, xmax]` in 0–1000 for overlay and report.
+
