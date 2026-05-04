@@ -7,8 +7,8 @@ export const SiteSettings: GlobalConfig = {
   slug: 'site-settings',
   label: 'Site Settings',
   fields: [
-    { name: 'siteTitle', type: 'text', required: true, defaultValue: 'ConstructAI' },
-    { name: 'titleTemplate', type: 'text', defaultValue: '%s | ConstructAI', admin: { description: 'e.g. %s | ConstructAI' } },
+    { name: 'siteTitle', type: 'text', required: true, defaultValue: 'SimplerBuild' },
+    { name: 'titleTemplate', type: 'text', defaultValue: '%s | SimplerBuild', admin: { description: 'e.g. %s | SimplerBuild' } },
     { name: 'defaultDescription', type: 'textarea', admin: { description: 'Fallback meta description' } },
     { name: 'defaultOGImage', type: 'text', admin: { description: 'Fallback OG image URL' } },
   ],

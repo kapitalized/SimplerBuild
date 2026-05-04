@@ -3,8 +3,8 @@
  */
 
 export const BRAND = {
-  name: 'ConstructAI',
+  name: 'SimplerBuild',
   logo: '/logo.png',
-  colors: { primary: '#2563eb', secondary: '#64748b' },
-  slogan: 'Precision AI for Technical Industries',
+  colors: { primary: '#EF813D', secondary: '#2D3E50' },
+  slogan: 'Smarter workflows for construction teams',
 } as const;
